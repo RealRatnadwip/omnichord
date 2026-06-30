@@ -1,0 +1,210 @@
+* {
+  box-sizing: border-box;
+  touch-action: none;
+  -moz-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+:root {
+  --font-family: "Andale Mono", "Trebuchet MS", "Lucida Sans Unicode",
+    monospace;
+  --font-size: max(min(1.8vw, 1.8vh), 1rem);
+  --harp-height: 100%;
+  --harp-left: 0;
+  --harp-top: 0;
+  --harp-width: 100%;
+}
+
+body {
+  background: #0e0e10;
+  font-family: var(--font-family);
+  margin: 0;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+body.resizing > * {
+  opacity: 0;
+}
+html,
+body,
+canvas {
+  height: 100%;
+  width: 100%;
+}
+canvas {
+  height: 100%;
+  left: 0;
+  position: fixed;
+  top: 0;
+  width: 100%;
+  z-index: 1;
+}
+
+/* Synth LCD Dashboard Bar */
+.synth-dashboard {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 34px;
+  background: #070709;
+  border-bottom: 1px solid #1b1b22;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  padding: 0 16px;
+  gap: 18px;
+  font-family: var(--font-family);
+  font-size: 11px;
+  color: #555;
+  z-index: 1000;
+  letter-spacing: 0.05em;
+  text-transform: lowercase;
+  overflow-x: auto;
+  white-space: nowrap;
+}
+.synth-dashboard span {
+  display: flex;
+  align-items: center;
+}
+.synth-dashboard .dash-brand {
+  font-weight: bold;
+  color: #777;
+}
+.synth-dashboard .dash-divider {
+  color: #1f1f26;
+}
+.synth-dashboard .dash-item span {
+  color: #aaa;
+  font-weight: bold;
+  margin-left: 4px;
+}
+
+/* Control Navigation Panel (Overlaying the Harp Area) */
+nav {
+  align-content: center;
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  flex-wrap: wrap;
+  height: var(--harp-height);
+  left: var(--harp-left);
+  position: fixed;
+  top: var(--harp-top);
+  width: var(--harp-width);
+  z-index: 999;
+  gap: 6px;
+  padding: 10px;
+  pointer-events: none; /* Let touches pass through margins */
+}
+nav > * {
+  pointer-events: auto; /* Re-enable click events for buttons */
+}
+nav:not(.config) button {
+  display: none;
+}
+nav > * {
+  margin: 0;
+}
+
+nav a,
+nav button {
+  align-items: center;
+  appearance: none;
+  background: #141418;
+  border: 1px solid #222;
+  border-radius: 2px;
+  box-sizing: border-box;
+  color: #777;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  font-family: var(--font-family);
+  font-size: calc(var(--font-size) * 0.7);
+  font-weight: bold;
+  line-height: 1;
+  padding: 6px 10px;
+  text-decoration: none;
+  text-transform: lowercase;
+  cursor: pointer;
+  width: 100%;
+  white-space: nowrap;
+  gap: 6px;
+  transition: background 0.1s, border-color 0.1s, color 0.1s;
+}
+nav button:hover, nav a:hover {
+  background: #191921;
+  border-color: #333;
+  color: #999;
+}
+nav button.active {
+  background: #1d1d22;
+  border-color: #3a3a45;
+  color: #eee;
+}
+nav button .led {
+  font-size: 8px;
+  margin-left: 4px;
+  color: #333;
+  transition: color 0.1s, text-shadow 0.1s;
+}
+nav button.active .led {
+  color: #ff3b30; /* Red hardware LED */
+  text-shadow: 0 0 5px rgba(255, 59, 48, 0.8);
+}
+#config-link {
+  font-style: italic;
+  background: #1b1b22;
+  border-color: #2e2e3a;
+  color: #aaa;
+  justify-content: center;
+  width: auto;
+}
+#config-link:hover {
+  background: #24242e;
+  color: #fff;
+}
+#config-link[href="#"] {
+  margin-top: calc(var(--font-size) * 0.25);
+}
+
+@media screen and (orientation: portrait) {
+  nav {
+    flex-direction: row;
+    gap: 4px;
+  }
+  nav a, nav button {
+    width: auto;
+    min-width: 0;
+  }
+  #config-link[href="#"] {
+    margin-top: 0;
+  }
+}
+
+/* Clean Brand Footer */
+.branding {
+  position: fixed;
+  bottom: calc(var(--font-size) * 0.5);
+  left: 50%;
+  transform: translateX(-50%);
+  font-family: var(--font-family);
+  font-size: calc(var(--font-size) * 0.6);
+  color: #444;
+  letter-spacing: 0.12em;
+  z-index: 1000;
+  pointer-events: auto;
+  text-transform: lowercase;
+  white-space: nowrap;
+}
+.branding a {
+  color: #666;
+  text-decoration: none;
+  transition: color 0.15s ease;
+}
+.branding a:hover {
+  color: #fff;
+}

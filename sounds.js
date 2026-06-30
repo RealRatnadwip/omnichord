@@ -71,7 +71,7 @@ export class Sounds {
           return undefined;
         }
         const player = new Tone.Player({
-          url: `/samples/rhythm-${rhythm}.mp3`,
+          url: `samples/rhythm-${rhythm}.mp3`,
           loop: true,
           onload: () => {
             load--;
@@ -170,12 +170,16 @@ export class Sounds {
 
   tempo(upOrDown) {
     const factor = upOrDown === "up" ? 1.05 : 0.95;
-    const rate = this.rhythms[1].playbackRate * factor;
-    this.rhythms.forEach((player) => {
-      if (player) {
-        player.playbackRate = rate;
-      }
-    });
+    const currentRate = (this.rhythms && this.rhythms[1]) ? this.rhythms[1].playbackRate : (this.rate || 1);
+    const rate = currentRate * factor;
+    this.rate = rate;
+    if (this.rhythms) {
+      this.rhythms.forEach((player) => {
+        if (player) {
+          player.playbackRate = rate;
+        }
+      });
+    }
     return rate;
   }
 

@@ -147,6 +147,7 @@ export class Controller {
         break;
       case "tempo":
         this._tempo = !this._tempo;
+        break;
       case "fx":
         this._fx = !this._fx;
         break;

@@ -1,11 +1,14 @@
 # Omnichord
 
-[omnichord.jake.fun](https://omnichord.jake.fun)
+[omnichord.745482.xyz](https://omnichord.745482.xyz)
 
 This is a static modern website. There is no build.
 
-Make sure silent mode is off on your ios device (red bell on some ipads, switch on the side of some phones/tablets).
+This is a **Realratnadwip Network project** ([ratnadwip.com](https://ratnadwip.com)).
 
-occasionally the sliding area does not make sound on load. refreshing the page normally resolves this.
+Make sure silent mode is off on your iOS device (red bell on some iPads, switch on the side of some phones/tablets).
 
-this app can overwhelm lower weight machines, looking to optimize it sometime soon.
+Occasionally the sliding area does not make sound on load. Refreshing the page normally resolves this.
+
+This app can overwhelm lower weight machines, looking to optimize it sometime soon.
+

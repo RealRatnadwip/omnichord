@@ -11,23 +11,53 @@ const toggleLabels = document.getElementById("labels");
 const toggleTempo = document.getElementById("tempo");
 const configLink = document.getElementById("config-link");
 
+// Synth Dashboard LCD Panel selectors
+const dashChord = document.getElementById("dash-chord");
+const dashRhythm = document.getElementById("dash-rhythm");
+const dashTempo = document.getElementById("dash-tempo");
+const dashFx = document.getElementById("dash-fx");
+const dashMode = document.getElementById("dash-mode");
+
 const controller = new Controller(canvas, () => updateDom());
 updateDom();
 
 function updateDom() {
+  // Update nav buttons highlight and LED status icon
   toggleFixed.className = controller._fixed ? "active" : "";
+  toggleFixed.innerHTML = `fixed <span class="led">${controller._fixed ? "●" : "○"}</span>`;
+
   toggleFx.className = controller._fx ? "active" : "";
+  toggleFx.innerHTML = `fx <span class="led">${controller._fx ? "●" : "○"}</span>`;
+
+  toggleInvert.className = controller._invert ? "active" : "";
+  toggleInvert.innerHTML = `invert <span class="led">${controller._invert ? "●" : "○"}</span>`;
+
   toggleLabels.className = controller._labels ? "active" : "";
+  toggleLabels.innerHTML = `labels <span class="led">${controller._labels ? "●" : "○"}</span>`;
+
   toggleTempo.className = "active";
-  toggleTempo.innerText = controller._tempo ? "Tempo" : "Pattern";
+  toggleTempo.innerText = controller._tempo ? "tempo" : "pattern";
+
+  // Update Synth Dashboard panel
+  if (dashRhythm) dashRhythm.innerText = (controller._rhythm || "none").toLowerCase();
+  if (dashTempo) dashTempo.innerText = `${(controller._rate || 1).toFixed(2)}x`;
+  if (dashFx) dashFx.innerText = controller._fx ? "on" : "off";
+  if (dashMode) {
+    if (controller.mode === "config") {
+      dashMode.innerHTML = `<span style="color: #ff3b30; text-shadow: 0 0 3px rgba(255, 59, 48, 0.5);">config</span> [click chord keys to toggle grid]`;
+    } else {
+      dashMode.innerText = "perform";
+    }
+  }
+
   if (controller.mode === "config") {
     nav.classList.add("config");
     configLink.href = "#";
-    configLink.text = "Perform";
+    configLink.text = "perform";
   } else {
     nav.classList.remove("config");
     configLink.href = "#config";
-    configLink.text = "Config";
+    configLink.text = "config";
   }
 }
 nav.addEventListener("click", () => controller.touch.handleAnyEventOccurred());
@@ -131,6 +161,13 @@ function render() {
     controller.currentAreaId && controller.areas[controller.currentAreaId]
       ? controller.areas[controller.currentAreaId].chord
       : null;
+  
+  // Real-time active chord LCD update
+  if (dashChord) {
+    dashChord.innerText = currentChord ? currentChord.label.toLowerCase() : "[none]";
+    dashChord.style.color = currentChord ? "#fff" : "#555";
+  }
+
   nav.style.display = currentChord ? "none" : "flex";
   const currentFillBright = currentChord
     ? fillForChord(currentChord, { isBright: true })
@@ -271,9 +308,12 @@ function render() {
           w: relW,
           h: relH,
         });
+        const isConfigMode = controller.mode === "config";
+        const isActive = isConfigMode ? Boolean(controller.actives[chord.label]) : true;
+        
         renderRectangle(
           area,
-          fillForChord(area.chord, { isBright: highlighted }),
+          fillForChord(area.chord, { isBright: highlighted, isDark: isConfigMode && !isActive }),
           highlighted
         );
         if (controller._labels) {
@@ -281,9 +321,13 @@ function render() {
             area,
             fillForChord(area.chord, {
               isBright: highlighted,
+              isDark: isConfigMode && !isActive,
               object: true,
             }),
-            highlighted
+            highlighted,
+            false,
+            Infinity,
+            isConfigMode && !isActive
           );
         }
       }
@@ -302,6 +346,7 @@ function render() {
       relY = chordShape.y;
     }
   });
+  
   controller.addArea({ id: "stepper", ...harpShape });
   if (currentChord) {
     let size =
@@ -312,10 +357,17 @@ function render() {
     relY = harpShape.y;
     const relW = isLandscape ? harpShape.w : size;
     const relH = isLandscape ? size : harpShape.h;
-    currentChord.stepper.forEach((_, i) => {
+    
+    currentChord.stepper.forEach((note, i) => {
       const shape = { x: relX, y: relY, w: relW, h: relH };
       const curr = i === activeIndex;
       renderRectangle(shape, curr ? currentFillBright : currentFill, curr);
+      
+      // Draw dynamic visual guides for strumplate notes
+      if (controller._labels) {
+        renderStringLabel(shape, note, curr);
+      }
+      
       if (isLandscape) {
         relY += size;
       } else {
@@ -325,6 +377,7 @@ function render() {
   } else {
     renderRectangle(harpShape, currentFill);
   }
+  
   const { X_RAT, Y_RAT } = controller.touch.dimensions();
   const { x, y, w, h } = controller.touch.relateArea(harpShape);
   document.body.style.setProperty("--harp-height", h * 100 + "%");
@@ -369,7 +422,8 @@ function renderChordLabel(
   { r, g, b },
   highlighted,
   italic,
-  maxFontSize = Infinity
+  maxFontSize = Infinity,
+  isDim = false
 ) {
   const { W, H, X, Y } = controller.touch.dimensions();
   const w = relW * W;
@@ -379,6 +433,8 @@ function renderChordLabel(
   const fontSize = Math.min(maxFontSize, Math.round(Math.min(w, h) * 0.25));
   context.fillStyle = highlighted
     ? "rgba(255, 255, 255, 0.95)"
+    : isDim
+    ? "rgba(255, 255, 255, 0.15)"
     : `rgba(${r}, ${g}, ${b}, 0.7)`;
   context.textAlign = "center";
   context.textBaseline = "middle";
@@ -397,6 +453,30 @@ function renderChordLabel(
   context.restore();
 }
 
+function renderStringLabel(
+  { x: relX, y: relY, w: relW, h: relH },
+  text,
+  highlighted
+) {
+  const { W, H, X, Y } = controller.touch.dimensions();
+  const w = relW * W;
+  const h = relH * H;
+  const x = w * 0.5 + relX * W + X;
+  const y = h * 0.5 + relY * H + Y;
+  const fontSize = Math.min(20, Math.round(Math.min(w, h) * 0.28));
+  
+  context.fillStyle = highlighted
+    ? "rgba(255, 255, 255, 0.95)"
+    : "rgba(255, 255, 255, 0.35)";
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.save();
+  context.translate(x, y);
+  context.font = `600 ${fontSize}px "Andale Mono", "Trebuchet MS", monospace`;
+  context.fillText(text.toLowerCase(), 0, 0);
+  context.restore();
+}
+
 function fillForChord(chord, { isBright, isDark, object } = {}) {
   let h;
   let s;
@@ -409,10 +489,10 @@ function fillForChord(chord, { isBright, isDark, object } = {}) {
     const offset = chordTypes.indexOf(chord.type);
     const step = ((1 / 12) * 360) / chordTypes.length;
     h = ((roots.indexOf(chord.notation) / 12) * 360 + offset * step) % 360;
-    s = 0.85;
+    s = 0.78; // Modernized rich saturation (original was 0.85, dry was 0.58)
   }
   const a = 1;
-  const l = (isBright ? 0.95 : isDark ? 0.2 : 0.3) * lFact;
+  const l = (isBright ? 0.92 : isDark ? 0.15 : 0.34) * lFact; // Rich visual contrast
   const rgb = hsvToRgb(h, s, l);
   return object
     ? { ...rgb, h, s, l, a }
@@ -425,12 +505,14 @@ function renderRectangle({ w, h, x, y }, fill, glow) {
   h = h * H - gutter * 2;
   x = x * W + gutter + X;
   y = y * H + gutter + Y;
+  if (w <= 0 || h <= 0) return;
+  
   context.save();
   if (glow) {
-    context.shadowColor = fill;
-    context.shadowBlur = gutter;
+    context.shadowColor = typeof fill === 'object' ? `rgba(${fill.r}, ${fill.g}, ${fill.b}, 0.8)` : fill;
+    context.shadowBlur = gutter * 2.5; // subtle soft glow around active box
   }
-  context.fillStyle = fill;
+  context.fillStyle = typeof fill === 'object' ? `rgba(${fill.r}, ${fill.g}, ${fill.b}, ${fill.a})` : fill;
   context.fillRect(x, y, w, h);
   context.restore();
 }
